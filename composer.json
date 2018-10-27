@@ -1,0 +1,21 @@
+{
+    "name": "demetrio77/yii2-multicurl",
+    "description": "",
+    "keywords": ["yii2","parsing","multicurl"],
+    "homepage": "http://www.github.com/demetrio77",
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Dmitry Karpov",
+            "email": "demetrio77@gmail.com"
+        }
+    ],
+    "prefer-stable": true,
+    "require": {
+        "php": "^7.0",
+        "yiisoft/yii2-httpclient": "~2.0.5"
+    },
+    "autoload": {
+        "psr-4": { "demetrio77\\multicurl\\": "src" }
+    }
+}
