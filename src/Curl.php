@@ -14,7 +14,7 @@ class Curl extends BaseComponent
     public $sleepOnErrorSerie = 60;
     public $maxSleepsOnErrorSeries = 5;
     
-    private $map;    
+    private $map=[];    
     private $multiHandler;
     private $serieOfErrors=0;
     private $calculatedMaxErrorSerie = 0;
@@ -75,12 +75,12 @@ class Curl extends BaseComponent
             $options[CURLOPT_HTTPHEADER] = $this->headers;
         }
         
-        if ($this->proxy && $Request->proxy) {
-            $Request->proxyUsed = $this->module->proxy->get();
+        if ($this->proxy!==false && $Request->proxy) {
+            $Request->proxyUsed = $this->proxy->get();
             $options[CURLOPT_PROXY] = $Request->proxyUsed;
                 
-            if ($this->module->proxy->isPrivate()){
-                $options[CURLOPT_PROXYUSERPWD] = $this->module->proxy->getCredentials();
+            if ($this->proxy->isPrivate()){
+                $options[CURLOPT_PROXYUSERPWD] = $this->proxy->getCredentials();
             }
         }
         
@@ -187,7 +187,7 @@ class Curl extends BaseComponent
         ]);
         
         if ($response->request->proxyUsed){
-            $this->module->proxy->unlock($response->request->proxyUsed);
+            $this->proxy->unlock($response->request->proxyUsed);
         }
         
         if ($response->isOk()) {
