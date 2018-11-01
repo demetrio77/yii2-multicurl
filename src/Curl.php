@@ -13,6 +13,7 @@ class Curl extends BaseComponent
     public $headers = [];
     public $sleepOnErrorSerie = 60;
     public $maxSleepsOnErrorSeries = 5;
+    public $sleepBetweenAttempts = 0;
     
     private $map=[];    
     private $multiHandler;
@@ -99,11 +100,15 @@ class Curl extends BaseComponent
             $this->proxy->start($this->threads);
         }
         
-        do {
-            $this->multi();
+        if ($this->threads > 1) {
+            do {
+                $this->multi();
+            }
+            while ($this->session->getCountReady() > 0);
+        } else {
+            $this->common();
         }
-        while ($this->session->getCountReady() > 0);
-
+        
         if ($this->proxy !== false ) {
             $this->proxy->end();
         }
@@ -113,6 +118,35 @@ class Curl extends BaseComponent
         }
         
         return $this->session;
+    }
+    
+    protected function common()
+    {
+        $ch = curl_init();
+        
+        while (($data = $this->session->get() )!==null){
+            $Request = $data['request'];
+            $key = $data['key'];
+            $options = $this->setOptions($Request);
+            curl_setopt_array($ch, $options);
+            $result = curl_exec($ch);
+            
+            $response = new Response([
+                'output' => $result,
+                'info'   => curl_getinfo($ch),
+                'request' => $Request,
+                'key'    => $key,
+                'session' => $this->session
+            ]);
+            
+            $this->proceedResponse($response);
+            if ($this->sleepBetweenAttempts) {
+                sleep(rand(floor($this->sleepBetweenAttempts/2), $this->sleepBetweenAttempts));
+            }
+        }
+        
+        curl_close($ch);
+        return true;
     }
     
     protected function fillQueue()
@@ -172,20 +206,8 @@ class Curl extends BaseComponent
         return true;
     }
     
-    protected function done($ch)
+    protected function proceedResponse($response)
     {
-        $chKey = (string)$ch;
-        $data = $this->map[$chKey];
-        unset($this->map[$chKey]);
-        
-        $response = new Response([
-            'output' => curl_multi_getcontent($ch),
-            'info'   => curl_getinfo($ch),
-            'request' => $data['request'],
-            'key'    => $data['key'],
-            'session' => $this->session
-        ]);
-        
         if ($response->request->proxyUsed){
             $this->proxy->unlock($response->request->proxyUsed);
         }
@@ -216,5 +238,22 @@ class Curl extends BaseComponent
         }
         
         return $response->error();
+    }
+    
+    protected function done($ch, $multiCurl=true, $result='')
+    {
+        $chKey = (string)$ch;
+        $data = $this->map[$chKey];
+        unset($this->map[$chKey]);
+        
+        $response = new Response([
+            'output' => curl_multi_getcontent($ch),
+            'info'   => curl_getinfo($ch),
+            'request' => $data['request'],
+            'key'    => $data['key'],
+            'session' => $this->session
+        ]);
+        
+        return $this->proceedResponse($response);
     }
 }
