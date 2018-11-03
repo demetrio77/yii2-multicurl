@@ -39,7 +39,7 @@ class Curl extends BaseComponent
         CURLOPT_TIMEOUT => 30
     ];
     
-    protected function setOptions($Request)
+    protected function setOptions(Request $Request)
     {
         // options for this entire curl object
         $options = $this->defaultOptions + $this->options;
@@ -71,9 +71,10 @@ class Curl extends BaseComponent
             $options[CURLOPT_TIMEOUT] = $Request->timeout;
         }
         
-        if ($this->headers) {
+        if ($Request->headers || $Request->cookies) {
             $options[CURLOPT_HEADER] = 0;
-            $options[CURLOPT_HTTPHEADER] = $this->headers;
+            $options[CURLOPT_HEADEROPT] = CURLHEADER_SEPARATE;
+            $options[CURLOPT_HTTPHEADER] = $Request->composeHeaderLines();
         }
         
         if ($this->proxy!==false && $Request->proxy) {

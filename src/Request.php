@@ -34,6 +34,12 @@ class Request extends BaseComponent
     public $headers = null;
     
     /**
+     * Sending cookies
+     * @var unknown
+     */
+    public $cookies = null;
+    
+    /**
      * Curl options
      * @var unknown
      */
@@ -99,4 +105,35 @@ class Request extends BaseComponent
      * @var string
      */
     public $expect = Response::EXPECT_HTML;
+    
+    public function composeHeaderLines()
+    {
+        if (!$this->headers) {
+            return [];
+        }
+        $headers = [];
+        foreach ($this->headers as $name => $values) {
+            $name = str_replace(' ', '-', ucwords(str_replace('-', ' ', $name)));
+            foreach ($values as $value) {
+                $headers[] = "$name: $value";
+            }
+        }
+        
+        if ($this->cookies) {
+            $headers[] = $this->getCookieHeader();
+        }
+        return $headers;
+    }
+    
+    /**
+     * @return string cookie header value.
+     */
+    protected function getCookieHeader()
+    {
+        $parts = [];
+        foreach ($this->cookies as $cookie) {
+            $parts[] = $cookie->name . '=' . $cookie->value;
+        }
+        return 'Cookie: ' . implode(';', $parts);
+    }
 }
