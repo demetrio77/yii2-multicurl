@@ -7,10 +7,14 @@ class ProxyRotated extends BaseProxy
     public $modelClass;
     private $proxies = [];
 
+    public function init()
+    {
+        $this->proxies = $this->modelClass::find()->all();
+    }
+
     public function start($threads)
     {
-        $this->proxies = [];
-        $this->proxies = $this->modelClass::find()->all();
+        return true;
     }
     
     public function get()
