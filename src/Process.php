@@ -1,6 +1,6 @@
-<?php 
+<?php
 
-namespace clcagency\scraper\components;
+namespace demetrio77\multicurl;
 
 class Process
 {
@@ -12,7 +12,7 @@ class Process
             $this->pid = $pid;
         }
     }
-    
+
     public static function run($command)
     {
         $command = 'nohup '.$command.' > /dev/null 2>&1 & echo $!';
@@ -37,6 +37,6 @@ class Process
     {
         $command = 'kill '.$this->pid;
         exec($command);
-        return !$this->status();        
+        return !$this->status();
     }
 }
