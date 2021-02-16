@@ -207,7 +207,7 @@ class Curl extends BaseComponent
         return true;
     }
 
-    protected function proceedResponse($response)
+    protected function proceedResponse(Response $response)
     {
         if ($response->request->proxyUsed){
             $this->proxy->unlock($response->request->proxyUsed);
