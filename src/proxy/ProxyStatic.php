@@ -10,22 +10,22 @@ class ProxyStatic extends BaseProxy
     {
         return true;
     }
-    
+
     public function get()
     {
         return $this->address;
     }
-    
+
     public function lock($adres)
     {
         return true;
     }
-    
+
     public function unlock($adres)
     {
         return true;
     }
-    
+
     public function end()
     {
         return true;

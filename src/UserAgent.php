@@ -1,8 +1,8 @@
-<?php 
+<?php
 
 namespace demetrio77\multicurl;
 
-class UserAgent 
+class UserAgent
 {
     private static $agents = [
         'Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US) AppleWebKit/527  (KHTML, like Gecko, Safari/419.3) Arora/0.6 (Change: )',
@@ -131,7 +131,7 @@ class UserAgent
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.5; rv:10.0.1) Gecko/20100101 Firefox/10.0.1 SeaMonkey/2.7.1',
         'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_3; en-us; Silk/1.0.13.81_10003810) AppleWebKit/533.16 (KHTML, like Gecko) Version/5.0 Safari/533.16 Silk-Accelerated=true'
     ];
-    
+
     public static function get()
     {
         return self::$agents[ rand(0, count(self::$agents)-1) ];
