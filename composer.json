@@ -13,6 +13,7 @@
     "prefer-stable": true,
     "require": {
         "php": "^7.0",
+        "ext-curl": "*",
         "yiisoft/yii2-httpclient": "~2.0.5"
     },
     "autoload": {
