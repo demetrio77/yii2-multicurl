@@ -2,6 +2,8 @@
 
 namespace demetrio77\multicurl;
 
+use demetrio77\multicurl\proxy\ProxyStatic;
+
 class Curl extends BaseComponent
 {
     const MAX_ERROR_SERIE = 100;
@@ -19,6 +21,7 @@ class Curl extends BaseComponent
     private $multiHandler;
     private $serieOfErrors=0;
     private $calculatedMaxErrorSerie = 0;
+    private $proxyService;
 
     /**
      *
@@ -29,7 +32,14 @@ class Curl extends BaseComponent
     public function init()
     {
         parent::init();
+
         $this->calculatedMaxErrorSerie = min(self::MAX_ERROR_SERIE, max($this->threads, 25));
+
+        if ($this->proxy && isset(\Yii::$app->params['proxy'])) {
+            $className = \Yii::$app->params['proxy']['className'] ?? ProxyStatic::class;
+            $options   =\Yii::$app->params['proxy']['options'] ?? [];
+            $this->proxyService = new $className($options);
+        }
     }
 
     protected $defaultOptions = [
@@ -78,11 +88,11 @@ class Curl extends BaseComponent
         }
 
         if ($this->proxy!==false && $Request->proxy) {
-            $Request->proxyUsed = $this->proxy->get();
+            $Request->proxyUsed = $this->proxyService->get();
             $options[CURLOPT_PROXY] = $Request->proxyUsed;
 
-            if ($this->proxy->isPrivate()){
-                $options[CURLOPT_PROXYUSERPWD] = $this->proxy->getCredentials();
+            if ($this->proxyService->isPrivate()){
+                $options[CURLOPT_PROXYUSERPWD] = $this->proxyService->getCredentials();
             }
         }
 
@@ -98,7 +108,7 @@ class Curl extends BaseComponent
         }
 
         if ($this->proxy !== false) {
-            $this->proxy->start($this->threads);
+            $this->proxyService->start($this->threads);
         }
 
         if ($this->threads > 1) {
@@ -111,7 +121,7 @@ class Curl extends BaseComponent
         }
 
         if ($this->proxy !== false ) {
-            $this->proxy->end();
+            $this->proxyService->end();
         }
 
         if ($callback && is_callable($callback)){
@@ -210,7 +220,7 @@ class Curl extends BaseComponent
     protected function proceedResponse(Response $response)
     {
         if ($response->request->proxyUsed){
-            $this->proxy->unlock($response->request->proxyUsed);
+            $this->proxyService->unlock($response->request->proxyUsed);
         }
 
         if ($response->isOk()) {
