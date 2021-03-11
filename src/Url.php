@@ -8,7 +8,7 @@ class Url extends BaseComponent
     public $attempts = 10;
     public $proxy = true;
 
-    protected function run($url)
+    public function response($url)
     {
         $Session = new Session();
 
@@ -31,12 +31,12 @@ class Url extends BaseComponent
 
     public function raw($url)
     {
-        return $this->run($url)->raw;
+        return $this->response($url)->raw;
     }
 
     public function output($url)
     {
-        return $this->run($url)->output;
+        return $this->response($url)->output;
     }
 
     public function xml($url)

@@ -35,6 +35,8 @@ class Curl extends BaseComponent
 
         $this->calculatedMaxErrorSerie = min(self::MAX_ERROR_SERIE, max($this->threads, 25));
 
+        $this->proxy = (bool)$this->proxy;
+
         if ($this->proxy && isset(\Yii::$app->params['proxy'])) {
             $className = \Yii::$app->params['proxy']['className'] ?? ProxyStatic::class;
             $options   =\Yii::$app->params['proxy']['options'] ?? [];
