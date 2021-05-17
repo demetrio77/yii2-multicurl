@@ -61,7 +61,7 @@ class Request extends BaseComponent
      * The number of attempts to get data by curl
      * @var integer
      */
-    public $attempts = 3;
+    public $attempts = 5;
 
     /**
      * Current number of attempts

@@ -246,7 +246,7 @@ class Curl extends BaseComponent
             $this->serieOfErrors = 0;
         }
 
-        if ($response->isToUpdateRequest() || $response->isNotExpected() || $response->hasAttempt()) {
+        if (($response->isToUpdateRequest() || $response->isNotExpected()) && $response->hasAttempt()) {
             return $this->session->update($response->key, $response->request);
         }
 
