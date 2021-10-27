@@ -21,13 +21,13 @@ class Response extends BaseComponent
      *
      * @var array
      */
-    public $info;
+    public array $info;
 
     /**
      *
      * @var Request
      */
-    public $request;
+    public Request $request;
 
     /**
      *
@@ -39,28 +39,34 @@ class Response extends BaseComponent
      *
      * @var string
      */
-    public $raw;
+    public string $raw;
 
     /**
      *
      * @var int
      */
-    public $key;
+    public int $key;
 
     /**
      *
      * @var int
      */
-    public $status;
+    public int $status;
 
     /**
      *
      * @var Session;
      */
-    public $session;
+    public Session $session;
 
-    public $errorCode = null;
+    /**
+     * @var string|null
+     */
+    public ?string $errorCode = null;
 
+    /**
+     *
+     */
     public function init()
     {
         parent::init();
@@ -68,16 +74,17 @@ class Response extends BaseComponent
         if (!isset($this->info['http_code']) || !$this->info['http_code']){
             $this->errorCode = 'No HTTP code returned';
             $this->status = self::STATUS_CURL_ERROR;
+
             $this->trigger(LogEvent::NAME, new LogEvent([
                 'type' => LogEvent::TYPE_ERROR,
                 'url' => $this->request->url,
                 'message' => $this->errorCode
             ]));
         }
-        elseif ($this->info['http_code']>='300'){
+        elseif ((int)$this->info['http_code'] >= 300 ){
             $this->errorCode = 'Error response code '.$this->info['http_code'];
 
-            if ($this->info['http_code']=='403'){
+            if ((int)$this->info['http_code'] === 403 ){
                 $this->status = self::STATUS_CURL_ERROR;
             }
             else {
@@ -93,6 +100,7 @@ class Response extends BaseComponent
         elseif (!$this->output){
             $this->errorCode = 'Empty output';
             $this->status = self::STATUS_CURL_ERROR;
+
             $this->trigger(LogEvent::NAME, new LogEvent([
                 'type' => LogEvent::TYPE_ERROR,
                 'url' => $this->request->url,
@@ -104,31 +112,47 @@ class Response extends BaseComponent
         }
     }
 
-    public function isCurlError()
+    /**
+     * @return bool
+     */
+    public function isCurlError(): bool
     {
-        return $this->status == self::STATUS_CURL_ERROR;
+        return $this->status === self::STATUS_CURL_ERROR;
     }
 
-    public function isOk()
+    /**
+     * @return bool
+     */
+    public function isOk(): bool
     {
-        return $this->status == self::STATUS_OK;
+        return $this->status === self::STATUS_OK;
     }
 
-    public function isToUpdateRequest()
+    /**
+     * @return bool
+     */
+    public function isToUpdateRequest(): bool
     {
-        return $this->status == self::STATUS_TO_UPDATE;
+        return $this->status === self::STATUS_TO_UPDATE;
     }
 
-    public function isNotExpected()
+    /**
+     * @return bool
+     */
+    public function isNotExpected(): bool
     {
-        return $this->status == self::STATUS_NOT_EXPECTED;
+        return $this->status === self::STATUS_NOT_EXPECTED;
     }
 
-    protected function textExpected($expected)
+    /**
+     * @param int $expected
+     * @return string
+     */
+    protected function textExpected(int $expected): string
     {
         switch ($expected) {
             case self::EXPECT_EXACT:
-                return 'bynary';
+                return 'binary';
             case self::EXPECT_HTML:
                 return 'html';
             case self::EXPECT_JSON:
@@ -136,9 +160,14 @@ class Response extends BaseComponent
             case self::EXPECT_XML:
                 return 'xml';
         }
+
+        return 'none';
     }
 
-    protected function checkExpectation()
+    /**
+     * @return bool
+     */
+    protected function checkExpectation(): bool
     {
         switch ($this->request->expect) {
             case self::EXPECT_EXACT:
@@ -152,7 +181,7 @@ class Response extends BaseComponent
                 break;
 
             case self::EXPECT_HTML:
-                if (strpos($this->output, '</html>')===false && strpos($this->output, '</body>')===false) {
+                if (strpos($this->output, '</html>') === false && strpos($this->output, '</body>') === false) {
                     $this->status = self::STATUS_NOT_EXPECTED;
                     $this->trigger(LogEvent::NAME, new LogEvent([
                         'type' => LogEvent::TYPE_ERROR,
@@ -167,7 +196,7 @@ class Response extends BaseComponent
                 try {
                     $this->raw = $this->output;
                     $this->output = Json::decode($this->output);
-                } catch (\Exception $e){
+                } catch (\Exception $exception){
                     $this->status = self::STATUS_NOT_EXPECTED;
                     $this->trigger(LogEvent::NAME, new LogEvent([
                         'type' => LogEvent::TYPE_ERROR,
@@ -182,7 +211,7 @@ class Response extends BaseComponent
                 try {
                     $this->raw = $this->output;
                     $this->output = new \SimpleXMLElement($this->output);
-                } catch (\Exception $e){
+                } catch (\Exception $exception){
                     $this->status = self::STATUS_NOT_EXPECTED;
                     $this->trigger(LogEvent::NAME, new LogEvent([
                         'type' => LogEvent::TYPE_ERROR,
@@ -197,14 +226,17 @@ class Response extends BaseComponent
         return true;
     }
 
-    public function hasAttempt()
+    /**
+     * @return bool
+     */
+    public function hasAttempt(): bool
     {
         if (!$this->isCurlError()){
-            $this->request->tries++;
+            $this->request->tries ++;
             $this->request->curlErrors = 0;
         }
         else {
-            $this->request->curlErrors++;
+            $this->request->curlErrors ++;
         }
 
         return ($this->request->tries < $this->request->attempts && $this->request->curlErrors < Request::MAX_CURL_ERRORS );
@@ -213,7 +245,7 @@ class Response extends BaseComponent
     public function success()
     {
         try {
-            if (!$this->isOk()) return ;
+            if (!$this->isOk()) return null;
             if (!$this->request->success || !is_callable($this->request->success)) return $this;
             return call_user_func($this->request->success, $this);
         }
@@ -233,7 +265,7 @@ class Response extends BaseComponent
             if ($this->request->error && is_callable($this->request->error)) {
                 return call_user_func($this->request->error, $this);
             }
-            return;
+            return null;
         }
         catch (\Exception $e){
             $this->trigger(LogEvent::NAME, new LogEvent([

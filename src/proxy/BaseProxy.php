@@ -6,23 +6,26 @@ use demetrio77\multicurl\BaseComponent;
 
 abstract class BaseProxy extends BaseComponent
 {
-    public $username;
-    public $password;
-    public $modelClass;
+    public string $username = '';
+    public string $password = '';
 
-    public function isPrivate()
+    /**
+     * @return bool
+     */
+    public function isPrivate(): bool
     {
-        return $this->username!='';
+        return $this->username !== '';
     }
 
-    public function getCredentials()
+    /**
+     * @return string
+     */
+    public function getCredentials(): string
     {
         return $this->username.':'.$this->password;
     }
 
-    abstract public function start($threads);
-    abstract public function get();
-    abstract public function lock($adres);
-    abstract public function unlock($adres);
-    abstract public function end();
+    abstract public function get(): string;
+    abstract public function unlock(string $proxy);
+    abstract public function getMaxThreads(int $threads);
 }

@@ -1,14 +1,21 @@
 <?php
-
 namespace demetrio77\multicurl;
+
+use demetrio77\multicurl\proxy\BaseProxy;
+use SimpleXMLElement;
 
 class Url extends BaseComponent
 {
-    public $expect = Response::EXPECT_EXACT;
-    public $attempts = 10;
-    public $proxy = true;
+    public int $expect = Response::EXPECT_EXACT;
+    public int $attempts = 10;
+    public ?BaseProxy $proxy;
 
-    public function response($url)
+    /**
+     * @param string $url
+     * @return mixed
+     * @throws Exception
+     */
+    public function response(string $url)
     {
         $Session = new Session();
 
@@ -20,38 +27,63 @@ class Url extends BaseComponent
 
         $Curl = new Curl([
             'proxy' => $this->proxy,
-            'threads' => 1
+            'threads' => 1,
         ]);
 
-        return $Curl->run($Session, function($Session){
+        return $Curl->run($Session, function($Session) {
             $request = array_shift($Session->requests);
             return $request['response'];
         });
     }
 
-    public function raw($url)
+    /**
+     * @param string $url
+     * @return string
+     * @throws Exception
+     */
+    public function raw(string $url): string
     {
         return $this->response($url)->raw;
     }
 
-    public function output($url)
+    /**
+     * @param string $url
+     * @return mixed
+     * @throws Exception
+     */
+    public function output(string $url)
     {
         return $this->response($url)->output;
     }
 
-    public function xml($url)
+    /**
+     * @param string $url
+     * @return SimpleXMLElement
+     * @throws Exception
+     */
+    public function xml(string $url): SimpleXMLElement
     {
         $this->expect = Response::EXPECT_XML;
         return $this->output($url);
     }
 
-    public function json($url)
+    /**
+     * @param string $url
+     * @return array
+     * @throws Exception
+     */
+    public function json(string $url): array
     {
         $this->expect = Response::EXPECT_JSON;
         return $this->output($url);
     }
 
-    public function html($url)
+    /**
+     * @param string $url
+     * @return string
+     * @throws Exception
+     */
+    public function html(string $url): string
     {
         $this->expect = Response::EXPECT_HTML;
         return $this->output($url);

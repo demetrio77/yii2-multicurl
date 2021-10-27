@@ -13,47 +13,47 @@ class Request extends BaseComponent
      * Requested url
      * @var string
      */
-    public $url = false;
+    public string $url = '';
 
     /**
      * Request method
      * @var string
      */
-    public $method = 'GET';
+    public string $method = 'GET';
 
     /**
      * Sending data
-     * @var unknown
+     * @var array|null
      */
-    public $postData = null;
+    public ?array $postData = null;
 
     /**
      * Sending headers
-     * @var unknown
+     * @var array|null
      */
-    public $headers = null;
+    public ?array $headers = null;
 
     /**
      * Sending cookies
-     * @var unknown
+     * @var array|null
      */
-    public $cookies = null;
+    public ?array $cookies = null;
 
     /**
      * Curl options
-     * @var unknown
+     * @var array|null
      */
-    public $options = null;
+    public ?array $options = null;
 
     /**
      * Callback function to process success response
-     * @var unknown
+     * @var callable
      */
     public $success = null;
 
     /**
      * Callback function to process error response
-     * @var unknown
+     * @var callable
      */
     public $error = null;
 
@@ -61,52 +61,55 @@ class Request extends BaseComponent
      * The number of attempts to get data by curl
      * @var integer
      */
-    public $attempts = 5;
+    public int $attempts = 5;
 
     /**
      * Current number of attempts
      * @var integer
      */
-    public $tries = 0;
+    public int $tries = 0;
 
     /**
      * Override curl's property if needed to set request's property instead of common for all request
-     * @var unknown
+     * @var bool
      */
-    public $proxy = true;
+    public bool $proxy = true;
 
     /**
      * Current number of curl errors
      * @var integer
      */
-    public $curlErrors = 0;
+    public int $curlErrors = 0;
 
     /**
      * Used proxy
-     * @var string
+     * @var string|null
      */
-    public $proxyUsed = null;
+    public ?string $proxyUsed = null;
 
     /**
      * Here one can specify the data needed to the callback
-     * @var unknown
+     * @var array|null
      */
-    public $requestData=null;
+    public ?array $requestData=null;
 
     /**
      *
      * @var integer
      */
-    public $timeout = 30;
+    public int $timeout = 30;
 
     /**
      * Expecting type of response's output
      *
-     * @var string
+     * @var int
      */
-    public $expect = Response::EXPECT_HTML;
+    public int $expect = 0;
 
-    public function composeHeaderLines()
+    /**
+     * @return string[]
+     */
+    public function composeHeaderLines(): array
     {
         if (!$this->headers) {
             return [];
@@ -120,7 +123,7 @@ class Request extends BaseComponent
         }
 
         if ($this->cookies) {
-            $headers[] = $this->getCookieHeader();
+            $headers[] = $this->getCookieHeader($this->cookies);
         }
         return $headers;
     }
@@ -128,10 +131,10 @@ class Request extends BaseComponent
     /**
      * @return string cookie header value.
      */
-    protected function getCookieHeader()
+    protected function getCookieHeader(array $cookies = []): string
     {
         $parts = [];
-        foreach ($this->cookies as $cookie) {
+        foreach ($cookies as $cookie) {
             $parts[] = $cookie->name . '=' . $cookie->value;
         }
         return 'Cookie: ' . implode(';', $parts);

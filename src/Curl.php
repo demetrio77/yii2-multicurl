@@ -1,62 +1,62 @@
 <?php
-
 namespace demetrio77\multicurl;
 
-use demetrio77\multicurl\proxy\ProxyStatic;
+use CurlMultiHandle;
 
 class Curl extends BaseComponent
 {
-    const MAX_ERROR_SERIE = 100;
+    const MAX_ERROR_SERIES = 100;
 
-    public $threads = 5;
-    public $timeout = 1;
-    public $options = [];
-    public $proxy = true;
-    public $headers = [];
-    public $sleepOnErrorSerie = 60;
-    public $maxSleepsOnErrorSeries = 5;
-    public $sleepBetweenAttempts = 0;
+    public int $threads = 5;
+    public int $timeout = 1;
+    public array $options = [];
+    public array $headers = [];
+    public int $sleepOnErrorSeries = 60;
+    public int $maxSleepsOnErrorSeries = 5;
+    public int $sleepBetweenAttempts = 0;
+    public object $proxy;
 
-    private $map=[];
+    protected string $proxyUsed;
+    private array $map=[];
     private $multiHandler;
-    private $serieOfErrors=0;
-    private $calculatedMaxErrorSerie = 0;
-    private $proxyService;
+    private int $seriesOfErrors = 0;
+    private int $calculatedMaxErrorSeries = 0;
 
     /**
      *
      * @var Session
      */
-    private $session;
+    private Session $session;
 
     public function init()
     {
         parent::init();
 
-        $this->calculatedMaxErrorSerie = min(self::MAX_ERROR_SERIE, max($this->threads, 25));
-
-        $this->proxy = (bool)$this->proxy;
-
-        if ($this->proxy && isset(\Yii::$app->params['proxy'])) {
-            $className = \Yii::$app->params['proxy']['className'] ?? ProxyStatic::class;
-            $options   =\Yii::$app->params['proxy']['options'] ?? [];
-            $this->proxyService = new $className($options);
+        if (!empty($this->proxy)) {
+            $this->threads = $this->proxy->getMaxThreads($this->threads);
         }
+
+        $this->calculatedMaxErrorSeries = min(self::MAX_ERROR_SERIES, max($this->threads, 25));
     }
 
-    protected $defaultOptions = [
+    protected array $defaultOptions = [
         CURLOPT_SSL_VERIFYPEER => 0,
         CURLOPT_RETURNTRANSFER => 1,
         CURLOPT_CONNECTTIMEOUT => 30,
         CURLOPT_TIMEOUT => 30
     ];
 
-    protected function setOptions(Request $Request)
+    /**
+     * @param Request $Request
+     * @return array
+     * @throws Exception
+     */
+    protected function setOptions(Request $Request): array
     {
         // options for this entire curl object
         $options = $this->defaultOptions + $this->options;
 
-        if (ini_get('safe_mode') == 'Off' || !ini_get('safe_mode')) {
+        if (ini_get('safe_mode') === 'Off' || !ini_get('safe_mode')) {
             $options[CURLOPT_FOLLOWLOCATION] = 1;
             $options[CURLOPT_MAXREDIRS] = 5;
         }
@@ -78,7 +78,7 @@ class Curl extends BaseComponent
             $options[CURLOPT_POSTFIELDS] = $Request->postData;
         }
 
-        if ($Request->timeout){
+        if ($Request->timeout) {
             $options[CURLOPT_CONNECTTIMEOUT] = $Request->timeout;
             $options[CURLOPT_TIMEOUT] = $Request->timeout;
         }
@@ -89,28 +89,37 @@ class Curl extends BaseComponent
             $options[CURLOPT_HTTPHEADER] = $Request->composeHeaderLines();
         }
 
-        if ($this->proxy!==false && $Request->proxy) {
-            $Request->proxyUsed = $this->proxyService->get();
+        if (!empty($this->proxy) && $Request->proxy) {
+            if (!method_exists($this->proxy, 'get')
+                || !method_exists($this->proxy, 'isPrivate')
+                || !method_exists($this->proxy, 'getCredentials')
+            ) {
+                throw new Exception('Proxy service does not support required method');
+            }
+
+            $Request->proxyUsed = $this->proxy->get();
             $options[CURLOPT_PROXY] = $Request->proxyUsed;
 
-            if ($this->proxyService->isPrivate()){
-                $options[CURLOPT_PROXYUSERPWD] = $this->proxyService->getCredentials();
+            if ($this->proxy->isPrivate()){
+                $options[CURLOPT_PROXYUSERPWD] = $this->proxy->getCredentials();
             }
         }
 
         return $options;
     }
 
-    public function run( Session $Session, $callback = null)
+    /**
+     * @param Session $Session
+     * @param callable|null $callback
+     * @return mixed
+     * @throws Exception
+     */
+    public function run( Session $Session, ?callable $callback = null)
     {
         $this->session = $Session;
 
         if (!$this->session->getCounter()){
             return null;
-        }
-
-        if ($this->proxy !== false) {
-            $this->proxyService->start($this->threads);
         }
 
         if ($this->threads > 1) {
@@ -122,10 +131,6 @@ class Curl extends BaseComponent
             $this->common();
         }
 
-        if ($this->proxy !== false ) {
-            $this->proxyService->end();
-        }
-
         if ($callback && is_callable($callback)){
             return call_user_func($callback, $this->session);
         }
@@ -133,7 +138,10 @@ class Curl extends BaseComponent
         return $this->session;
     }
 
-    protected function common()
+    /**
+     * @throws Exception
+     */
+    protected function common(): void
     {
         $ch = curl_init();
 
@@ -145,30 +153,32 @@ class Curl extends BaseComponent
             $result = curl_exec($ch);
 
             $response = new Response([
-                'output' => $result,
-                'info'   => curl_getinfo($ch),
+                'output'  => $result,
+                'info'    => curl_getinfo($ch),
                 'request' => $Request,
-                'key'    => $key,
+                'key'     => $key,
                 'session' => $this->session
             ]);
 
             $this->proceedResponse($response);
+
             if ($this->sleepBetweenAttempts) {
                 sleep(rand(floor($this->sleepBetweenAttempts/2), $this->sleepBetweenAttempts));
             }
         }
 
         curl_close($ch);
-        return true;
     }
 
-    protected function fillQueue()
+    /**
+     * @throws Exception
+     */
+    protected function fillQueue(): void
     {
         $active = count($this->map);
 
-        while( ($active<$this->threads) && ($data = $this->session->get())!==null){
+        while( ($active < $this->threads) && ($data = $this->session->get()) !== null ) {
             $Request = $data['request'];
-            $key = $data['key'];
 
             $ch = curl_init();
             $options = $this->setOptions($Request);
@@ -181,16 +191,19 @@ class Curl extends BaseComponent
         }
     }
 
-    protected function multi()
+    /**
+     * @throws Exception
+     */
+    protected function multi(): void
     {
         $this->multiHandler = curl_multi_init();
         curl_multi_setopt($this->multiHandler, CURLMOPT_MAXCONNECTS, $this->threads*4);
         $this->fillQueue();
 
         do {
-            while(($execrun = curl_multi_exec($this->multiHandler, $stillRunning)) == CURLM_CALL_MULTI_PERFORM);
+            while (($execrun = curl_multi_exec($this->multiHandler, $stillRunning)) == CURLM_CALL_MULTI_PERFORM);
 
-            if ($execrun != CURLM_OK) break;
+            if ($execrun !== CURLM_OK) break;
 
             // a request was just completed - find out which one
             while ($done = curl_multi_info_read($this->multiHandler, $currentMessagesInQueue)) {
@@ -214,15 +227,19 @@ class Curl extends BaseComponent
             }
         }
         while ($stillRunning);
+
         curl_multi_close($this->multiHandler);
         $this->map = [];
-        return true;
     }
 
+    /**
+     * @param Response $response
+     * @return mixed
+     */
     protected function proceedResponse(Response $response)
     {
-        if ($response->request->proxyUsed){
-            $this->proxyService->unlock($response->request->proxyUsed);
+        if ($response->request->proxyUsed) {
+            $this->proxy->unlock($response->request->proxyUsed);
         }
 
         if ($response->isOk()) {
@@ -230,20 +247,20 @@ class Curl extends BaseComponent
         }
 
         if ($response->isCurlError()){
-            $this->serieOfErrors++;
+            $this->seriesOfErrors ++;
 
-            if ($this->serieOfErrors > $this->calculatedMaxErrorSerie){
-                $this->serieOfErrors = 0;
-                if ($this->sleepOnErrorSerie) {
+            if ($this->seriesOfErrors > $this->calculatedMaxErrorSeries){
+                $this->seriesOfErrors = 0;
+                if ($this->sleepOnErrorSeries) {
                     $this->trigger(LogEvent::NAME, new LogEvent([
-                        'message' => 'Proxies are unreachable, so the script will be paused for '.$this->sleepOnErrorSerie.' seconds',
+                        'message' => 'Proxies are unreachable, so the script will be paused for '.$this->sleepOnErrorSeries.' seconds',
                     ]));
-                    sleep($this->sleepOnErrorSerie);
+                    sleep($this->sleepOnErrorSeries);
                 }
             }
         }
         else {
-            $this->serieOfErrors = 0;
+            $this->seriesOfErrors = 0;
         }
 
         if (($response->isToUpdateRequest() || $response->isNotExpected()) && $response->hasAttempt()) {
@@ -253,18 +270,22 @@ class Curl extends BaseComponent
         return $response->error();
     }
 
-    protected function done($ch, $multiCurl=true, $result='')
+    /**
+     * @param $ch
+     * @return mixed
+     */
+    protected function done($ch)
     {
         $chKey = (string)$ch;
         $data = $this->map[$chKey];
         unset($this->map[$chKey]);
 
         $response = new Response([
-            'output' => curl_multi_getcontent($ch),
-            'info'   => curl_getinfo($ch),
-            'request' => $data['request'],
-            'key'    => $data['key'],
-            'session' => $this->session
+            'output'  =>  curl_multi_getcontent($ch),
+            'info'    =>  curl_getinfo($ch),
+            'request' =>  $data['request'],
+            'key'     =>  $data['key'],
+            'session' =>  $this->session,
         ]);
 
         return $this->proceedResponse($response);

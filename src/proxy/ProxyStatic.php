@@ -4,30 +4,30 @@ namespace demetrio77\multicurl\proxy;
 
 class ProxyStatic extends BaseProxy
 {
-    public $address;
+    public string $address;
 
-    public function start($threads)
-    {
-        return true;
-    }
-
-    public function get()
+    /**
+     * @return string
+     */
+    public function get(): string
     {
         return $this->address;
     }
 
-    public function lock($adres)
+    /**
+     * @param int $threads
+     * @return int
+     */
+    public function getMaxThreads(int $threads): int
     {
-        return true;
+        return $threads;
     }
 
-    public function unlock($adres)
+    /**
+     * @param string $proxy
+     */
+    public function unlock(string $proxy)
     {
-        return true;
-    }
-
-    public function end()
-    {
-        return true;
+        //Nothing happened needed
     }
 }

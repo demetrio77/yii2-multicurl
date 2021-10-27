@@ -4,36 +4,52 @@ namespace demetrio77\multicurl;
 
 class Process
 {
-    private $pid;
+    /**
+     * @var string
+     */
+    private string $pid;
 
-    public function __construct($pid=0)
+    /**
+     * @param int $pid
+     */
+    public function __construct(int $pid = 0)
     {
-        if ($this->pid) {
-            $this->pid = $pid;
-        }
+        $this->pid = $pid;
     }
 
-    public static function run($command)
+    /**
+     * @param string $command
+     * @return int
+     */
+    public static function run(string $command): int
     {
         $command = 'nohup '.$command.' > /dev/null 2>&1 & echo $!';
         exec($command ,$op);
-        $pid = (int)$op[0];
-        return $pid;
+        return (int)$op[0];
     }
 
-    public function getPid()
+    /**
+     * @return int
+     */
+    public function getPid(): int
     {
         return $this->pid;
     }
 
-    public function status()
+    /**
+     * @return bool
+     */
+    public function status(): bool
     {
         $command = 'ps -p '.$this->pid;
         exec($command,$op);
         return isset($op[1]);
     }
 
-    public function stop()
+    /**
+     * @return bool
+     */
+    public function stop(): bool
     {
         $command = 'kill '.$this->pid;
         exec($command);

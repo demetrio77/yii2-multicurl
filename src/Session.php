@@ -14,37 +14,46 @@ class Session extends BaseComponent
      * Whether to mix or not requests
      * @var boolean
      */
-    public $shuffle = false;
+    public bool $shuffle = false;
 
     /**
      * All requests of session
      * @var Request[]
      */
-    public $requests;
+    public array $requests = [];
 
     /**
      * The keys of requests not already been used
      * @var int[]
      */
-    private $preparedRequests = [];
+    private array $preparedRequests = [];
 
     /**
      * The counter of requests
      * @var int
      */
-    private $counter = 0;
+    private int $counter = 0;
 
-    public function getCounter()
+    /**
+     * @return int
+     */
+    public function getCounter(): int
     {
         return $this->counter;
     }
 
-    public function getCountReady()
+    /**
+     * @return int
+     */
+    public function getCountReady(): int
     {
         return count($this->preparedRequests);
     }
 
-    public function add($Request)
+    /**
+     * @param Request $Request
+     */
+    public function add(Request $Request): void
     {
         $this->requests[] = [
             'request' => $Request,
@@ -54,7 +63,12 @@ class Session extends BaseComponent
         $this->preparedRequests[] = $this->counter++;
     }
 
-    public function update($key, $Request)
+    /**
+     * @param int $key
+     * @param Request $Request
+     * @return bool
+     */
+    public function update(int $key, Request $Request): bool
     {
         $this->requests[$key] = [
             'request' => $Request,
@@ -64,10 +78,14 @@ class Session extends BaseComponent
         if (!in_array($key, $this->preparedRequests)){
             $this->preparedRequests[] = $key;
         }
+
         return true;
     }
 
-    public function get()
+    /**
+     * @return array|null
+     */
+    public function get(): ?array
     {
         if (!$this->getCountReady()) {
             return null;
@@ -88,7 +106,12 @@ class Session extends BaseComponent
         ];
     }
 
-    public function setResult($key, $data)
+    /**
+     * @param int $key
+     * @param $data
+     * @return bool
+     */
+    public function setResult(int $key, $data): bool
     {
         if (!isset($this->requests[$key])){
             return false;

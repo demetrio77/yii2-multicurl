@@ -1,39 +1,50 @@
 <?php
-
 namespace demetrio77\multicurl\proxy;
 
 class ProxyRotated extends BaseProxy
 {
-    public $modelClass;
-    private $proxies = [];
+    /**
+     * @var array
+     */
+    protected array $proxies = [];
 
+    /**
+     * @var array
+     */
+    protected array $free = [];
+
+    /**
+     *
+     */
     public function init()
     {
-        $this->proxies = $this->modelClass::find()->all();
+        parent::init();
+
+        $this->free = $this->proxies;
     }
 
-    public function start($threads)
+    /**
+     * @return string
+     */
+    public function get(): string
     {
-        return true;
+        return array_shift($this->free);
     }
-    
-    public function get()
+
+    /**
+     * @param string $proxy
+     */
+    public function unlock(string $proxy): void
     {
-        return $this->proxies[rand(0,count($this->proxies)-1)]->adres;
+        $this->free[] = $proxy;
     }
-    
-    public function lock($adres)
+
+    /**
+     * @param int $threads
+     * @return int
+     */
+    public function getMaxThreads(int $threads): int
     {
-         return true;
-    }
-    
-    public function unlock($adres)
-    {
-        return true;
-    }
-    
-    public function end()
-    {
-        return true;
+        return min($threads, count($this->proxies));
     }
 }
