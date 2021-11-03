@@ -41,7 +41,7 @@ class Url extends BaseComponent
      * @return string
      * @throws Exception
      */
-    public function raw(string $url): string
+    public function raw(string $url): ?string
     {
         return $this->response($url)->raw;
     }
@@ -58,10 +58,10 @@ class Url extends BaseComponent
 
     /**
      * @param string $url
-     * @return SimpleXMLElement
+     * @return SimpleXMLElement|null
      * @throws Exception
      */
-    public function xml(string $url): SimpleXMLElement
+    public function xml(string $url): ?SimpleXMLElement
     {
         $this->expect = Response::EXPECT_XML;
         return $this->output($url);
@@ -69,10 +69,10 @@ class Url extends BaseComponent
 
     /**
      * @param string $url
-     * @return array
+     * @return array|null
      * @throws Exception
      */
-    public function json(string $url): array
+    public function json(string $url): ?array
     {
         $this->expect = Response::EXPECT_JSON;
         return $this->output($url);
@@ -80,10 +80,10 @@ class Url extends BaseComponent
 
     /**
      * @param string $url
-     * @return string
+     * @return string|null
      * @throws Exception
      */
-    public function html(string $url): string
+    public function html(string $url): ?string
     {
         $this->expect = Response::EXPECT_HTML;
         return $this->output($url);

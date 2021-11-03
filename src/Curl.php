@@ -14,7 +14,7 @@ class Curl extends BaseComponent
     public int $sleepOnErrorSeries = 60;
     public int $maxSleepsOnErrorSeries = 5;
     public int $sleepBetweenAttempts = 0;
-    public object $proxy;
+    public ?object $proxy = null;
 
     protected string $proxyUsed;
     private array $map=[];
@@ -146,6 +146,7 @@ class Curl extends BaseComponent
         $ch = curl_init();
 
         while (($data = $this->session->get() )!==null){
+            /** @var Request $Request */
             $Request = $data['request'];
             $key = $data['key'];
             $options = $this->setOptions($Request);
@@ -263,7 +264,7 @@ class Curl extends BaseComponent
             $this->seriesOfErrors = 0;
         }
 
-        if (($response->isToUpdateRequest() || $response->isNotExpected()) && $response->hasAttempt()) {
+        if (($response->isToUpdateRequest() || $response->isNotExpected() || $response->isCurlError()) && $response->hasAttempt()) {
             return $this->session->update($response->key, $response->request);
         }
 
