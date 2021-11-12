@@ -25,8 +25,9 @@ class ProxyStatic extends BaseProxy
 
     /**
      * @param string $proxy
+     * @param bool $isOk
      */
-    public function unlock(string $proxy)
+    public function unlock(string $proxy, bool $isOk = false)
     {
         //Nothing happened needed
     }

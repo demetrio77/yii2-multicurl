@@ -26,6 +26,6 @@ abstract class BaseProxy extends BaseComponent
     }
 
     abstract public function get(): string;
-    abstract public function unlock(string $proxy);
+    abstract public function unlock(string $proxy, bool $isOk = false);
     abstract public function getMaxThreads(int $threads);
 }

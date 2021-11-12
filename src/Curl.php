@@ -1,7 +1,7 @@
 <?php
 namespace demetrio77\multicurl;
 
-use CurlMultiHandle;
+use common\models\Test;
 
 class Curl extends BaseComponent
 {
@@ -240,7 +240,7 @@ class Curl extends BaseComponent
     protected function proceedResponse(Response $response)
     {
         if ($response->request->proxyUsed) {
-            $this->proxy->unlock($response->request->proxyUsed);
+            $this->proxy->unlock($response->request->proxyUsed, $response->isOk());
         }
 
         if ($response->isOk()) {

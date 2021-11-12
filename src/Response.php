@@ -39,19 +39,19 @@ class Response extends BaseComponent
      *
      * @var string
      */
-    public string $raw;
+    public ?string $raw = null;
 
     /**
      *
      * @var int
      */
-    public int $key;
+    public int $key = 0;
 
     /**
      *
-     * @var int
+     * @var int|null
      */
-    public int $status;
+    public ?int $status = null;
 
     /**
      *
@@ -60,9 +60,14 @@ class Response extends BaseComponent
     public Session $session;
 
     /**
+     * @var int|null
+     */
+    public ?int $errorCode = null;
+
+    /**
      * @var string|null
      */
-    public ?string $errorCode = null;
+    public ?string $errorText = null;
 
     /**
      *
@@ -72,17 +77,19 @@ class Response extends BaseComponent
         parent::init();
 
         if (!isset($this->info['http_code']) || !$this->info['http_code']){
-            $this->errorCode = 'No HTTP code returned';
+            $this->errorCode = 0;
+            $this->errorText = 'No HTTP code returned';
             $this->status = self::STATUS_CURL_ERROR;
 
             $this->trigger(LogEvent::NAME, new LogEvent([
                 'type' => LogEvent::TYPE_ERROR,
                 'url' => $this->request->url,
-                'message' => $this->errorCode
+                'message' => $this->errorText
             ]));
         }
         elseif ((int)$this->info['http_code'] >= 300 ){
-            $this->errorCode = 'Error response code '.$this->info['http_code'];
+            $this->errorCode = (int)$this->info['http_code'];
+            $this->errorText = 'Error response code '.$this->info['http_code'];
 
             if ((int)$this->info['http_code'] === 403 ){
                 $this->status = self::STATUS_CURL_ERROR;
@@ -94,17 +101,18 @@ class Response extends BaseComponent
             $this->trigger(LogEvent::NAME, new LogEvent([
                 'type' => LogEvent::TYPE_ERROR,
                 'url' => $this->request->url,
-                'message' => $this->errorCode
+                'message' => $this->errorText
             ]));
         }
         elseif (!$this->output){
-            $this->errorCode = 'Empty output';
+            $this->errorCode = 0;
+            $this->errorText = 'Empty output';
             $this->status = self::STATUS_CURL_ERROR;
 
             $this->trigger(LogEvent::NAME, new LogEvent([
                 'type' => LogEvent::TYPE_ERROR,
                 'url' => $this->request->url,
-                'message' => $this->errorCode
+                'message' => $this->errorText
             ]));
         }
         elseif ($this->checkExpectation()) {

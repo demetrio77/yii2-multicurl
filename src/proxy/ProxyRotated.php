@@ -33,8 +33,9 @@ class ProxyRotated extends BaseProxy
 
     /**
      * @param string $proxy
+     * @param bool $isOk
      */
-    public function unlock(string $proxy): void
+    public function unlock(string $proxy, bool $isOk = false): void
     {
         $this->free[] = $proxy;
     }
