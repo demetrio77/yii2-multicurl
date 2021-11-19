@@ -8,7 +8,7 @@ class Url extends BaseComponent
 {
     public int $expect = Response::EXPECT_EXACT;
     public int $attempts = 10;
-    public ?BaseProxy $proxy;
+    public ?BaseProxy $proxy = null;
 
     /**
      * @param string $url
