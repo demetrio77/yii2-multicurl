@@ -243,10 +243,6 @@ class Curl extends BaseComponent
             $this->proxy->unlock($response->request->proxyUsed, $response->isOk());
         }
 
-        if ($response->isOk()) {
-            return $this->session->setResult($response->key, $response->success());
-        }
-
         if ($response->isCurlError()){
             $this->seriesOfErrors ++;
 
@@ -262,6 +258,10 @@ class Curl extends BaseComponent
         }
         else {
             $this->seriesOfErrors = 0;
+        }
+
+        if ($response->isOk()) {
+            return $this->session->setResult($response->key, $response->success());
         }
 
         if (($response->isToUpdateRequest() || $response->isNotExpected() || $response->isCurlError()) && $response->hasAttempt()) {
