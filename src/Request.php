@@ -76,6 +76,12 @@ class Request extends BaseComponent
     public bool $proxy = true;
 
     /**
+     * Set CloudFlare workaround support
+     * @var bool
+     */
+    public bool $isCloudFlare = false;
+
+    /**
      * Current number of curl errors
      * @var integer
      */

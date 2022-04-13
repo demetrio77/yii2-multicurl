@@ -9,6 +9,7 @@ class Url extends BaseComponent
     public int $expect = Response::EXPECT_EXACT;
     public int $attempts = 10;
     public ?BaseProxy $proxy = null;
+    public bool $isCloudFlare = false;
 
     /**
      * @param string $url
@@ -22,7 +23,8 @@ class Url extends BaseComponent
         $Session->add(new Request([
             'url' => $url,
             'expect' => $this->expect,
-            'attempts' => $this->attempts
+            'attempts' => $this->attempts,
+            'isCloudFlare' => $this->isCloudFlare,
         ]));
 
         $Curl = new Curl([

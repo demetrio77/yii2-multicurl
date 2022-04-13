@@ -78,9 +78,15 @@ class Curl extends BaseComponent
             $options[CURLOPT_POSTFIELDS] = $Request->postData;
         }
 
+        // set timeout options
         if ($Request->timeout) {
             $options[CURLOPT_CONNECTTIMEOUT] = $Request->timeout;
             $options[CURLOPT_TIMEOUT] = $Request->timeout;
+        }
+
+        // set CloudFlare workaround
+        if ($Request->isCloudFlare && !empty(\Yii::$app->params['cloudFlareUA'])) {
+            $options[CURLOPT_USERAGENT] = \Yii::$app->params['cloudFlareUA'];
         }
 
         if ($Request->headers || $Request->cookies) {
