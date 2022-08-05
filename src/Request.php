@@ -82,6 +82,12 @@ class Request extends BaseComponent
     public bool $isCloudFlare = false;
 
     /**
+     * Set CloudFlare workaround with Puppeteer
+     * @var bool
+     */
+    public bool $withHeadlessBrowser = false;
+
+    /**
      * Current number of curl errors
      * @var integer
      */
@@ -103,7 +109,7 @@ class Request extends BaseComponent
      *
      * @var integer
      */
-    public int $timeout = 30;
+    public int $timeout = 0;
 
     /**
      * Expecting type of response's output
@@ -111,6 +117,11 @@ class Request extends BaseComponent
      * @var int
      */
     public int $expect = 0;
+
+    /**
+     * @var string
+     */
+    public string $realUrl = '';
 
     /**
      * @return string[]

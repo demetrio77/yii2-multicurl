@@ -76,6 +76,10 @@ class Response extends BaseComponent
     {
         parent::init();
 
+        if ($this->request->withHeadlessBrowser) {
+            $this->request->url = $this->request->realUrl;
+        }
+
         if (!isset($this->info['http_code']) || !$this->info['http_code']){
             $this->errorCode = 0;
             $this->errorText = 'No HTTP code returned';

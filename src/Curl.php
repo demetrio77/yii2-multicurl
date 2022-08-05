@@ -1,6 +1,7 @@
 <?php
 namespace demetrio77\multicurl;
 
+use analytics\crm\Puppeteer\CloudFlareWorkaroundService;
 use common\models\Test;
 
 class Curl extends BaseComponent
@@ -42,8 +43,8 @@ class Curl extends BaseComponent
     protected array $defaultOptions = [
         CURLOPT_SSL_VERIFYPEER => 0,
         CURLOPT_RETURNTRANSFER => 1,
-        CURLOPT_CONNECTTIMEOUT => 30,
-        CURLOPT_TIMEOUT => 30
+        CURLOPT_CONNECTTIMEOUT => 300,
+        CURLOPT_TIMEOUT => 90,
     ];
 
     /**
@@ -66,9 +67,6 @@ class Curl extends BaseComponent
             $options = $Request->options + $options;
         }
 
-        // set the request URL
-        $options[CURLOPT_URL] = $Request->url;
-
         //User-agent header
         $options[CURLOPT_USERAGENT] = UserAgent::get();
 
@@ -78,17 +76,27 @@ class Curl extends BaseComponent
             $options[CURLOPT_POSTFIELDS] = $Request->postData;
         }
 
-        // set timeout options
-        if ($Request->timeout) {
-            $options[CURLOPT_CONNECTTIMEOUT] = $Request->timeout;
-            $options[CURLOPT_TIMEOUT] = $Request->timeout;
-        }
-
         // set CloudFlare workaround
         if ($Request->isCloudFlare && !empty(\Yii::$app->params['cloudFlareUA'])) {
             $options[CURLOPT_USERAGENT] = \Yii::$app->params['cloudFlareUA'];
         }
 
+        // set timeout options
+        if ($Request->timeout) {
+            $options[CURLOPT_TIMEOUT] = $Request->timeout;
+        }
+
+        // set Puppeteer workaround
+        if ($Request->withHeadlessBrowser && !empty(\Yii::$app->params['puppeteer']) && !empty(\Yii::$app->params['puppeteer-url'])) {
+            $Request->realUrl = $Request->url;
+            $Request->url = \Yii::$app->params['puppeteer-url'] . '?url=' . $Request->realUrl .
+                '&token=' . CloudFlareWorkaroundService::generateToken();
+        }
+
+        // set the request URL
+        $options[CURLOPT_URL] = $Request->url;
+
+        // headers
         if ($Request->headers || $Request->cookies) {
             $options[CURLOPT_HEADER] = 0;
             $options[CURLOPT_HEADEROPT] = CURLHEADER_SEPARATE;
@@ -193,6 +201,7 @@ class Curl extends BaseComponent
             curl_multi_add_handle($this->multiHandler, $ch);
             $chKey = (string) $ch;
 
+            $data['added'] = time();
             $this->map[$chKey] = $data;
             $active++;
         }
@@ -204,13 +213,15 @@ class Curl extends BaseComponent
     protected function multi(): void
     {
         $this->multiHandler = curl_multi_init();
-        curl_multi_setopt($this->multiHandler, CURLMOPT_MAXCONNECTS, $this->threads*4);
+        curl_multi_setopt($this->multiHandler, CURLMOPT_MAXCONNECTS, $this->threads * 4);
         $this->fillQueue();
 
         do {
             while (($execrun = curl_multi_exec($this->multiHandler, $stillRunning)) == CURLM_CALL_MULTI_PERFORM);
 
-            if ($execrun !== CURLM_OK) break;
+            if ($execrun !== CURLM_OK) {
+                break;
+            }
 
             // a request was just completed - find out which one
             while ($done = curl_multi_info_read($this->multiHandler, $currentMessagesInQueue)) {

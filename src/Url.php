@@ -10,6 +10,7 @@ class Url extends BaseComponent
     public int $attempts = 10;
     public ?BaseProxy $proxy = null;
     public bool $isCloudFlare = false;
+    public bool $withHeadlessBrowser = false;
 
     /**
      * @param string $url
@@ -25,6 +26,7 @@ class Url extends BaseComponent
             'expect' => $this->expect,
             'attempts' => $this->attempts,
             'isCloudFlare' => $this->isCloudFlare,
+            'withHeadlessBrowser' => $this->withHeadlessBrowser,
         ]));
 
         $Curl = new Curl([
