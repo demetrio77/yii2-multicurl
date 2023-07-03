@@ -6,6 +6,7 @@ use yii\helpers\Json;
 
 class Response extends BaseComponent
 {
+    const EXPECT_ANY = 0;
     const EXPECT_HTML = 1;
     const EXPECT_XML = 2;
     const EXPECT_JSON = 3;
