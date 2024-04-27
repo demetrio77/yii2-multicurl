@@ -199,7 +199,7 @@ class Curl extends BaseComponent
             $options = $this->setOptions($Request);
             curl_setopt_array($ch,$options);
             curl_multi_add_handle($this->multiHandler, $ch);
-            $chKey = (string) $ch;
+            $chKey = (int) $ch;
 
             $data['added'] = time();
             $this->map[$chKey] = $data;
@@ -294,7 +294,7 @@ class Curl extends BaseComponent
      */
     protected function done($ch)
     {
-        $chKey = (string)$ch;
+        $chKey = (int)$ch;
         $data = $this->map[$chKey];
         unset($this->map[$chKey]);
 
