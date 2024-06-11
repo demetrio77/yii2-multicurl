@@ -47,7 +47,7 @@ class Url extends BaseComponent
      */
     public function raw(string $url): ?string
     {
-        return $this->response($url)->raw;
+        return $this->response($url)?->raw;
     }
 
     /**
@@ -57,7 +57,7 @@ class Url extends BaseComponent
      */
     public function output(string $url)
     {
-        return $this->response($url)->output;
+        return $this->response($url)?->output;
     }
 
     /**
