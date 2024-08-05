@@ -6,7 +6,7 @@ class ProxyRotated extends BaseProxy
     /**
      * @var array
      */
-    protected array $proxies = [];
+    public array $proxies = [];
 
     /**
      * @var array
